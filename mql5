@@ -1,0 +1,83 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                               Kubota.mq5        |
+//|                                   Copyright 2023, Forex Robot Easy Team|
+//|                                      https://forexroboteasy.com   |
+//+------------------------------------------------------------------+
+
+// Import necessary libraries
+#include <Trade\Trade.mqh>
+#include <ANN\ANN.mqh>
+
+// Define input parameters
+input double LotSize = 0.01;
+input double StopLoss = 50;
+input double TakeProfit = 100;
+
+// Define global variables
+CTrade trade;
+CNeuralNetwork neuralNetwork;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   // Initialize neural network
+   neuralNetwork.Init(ANN_ARCHITECTURE, ANN_LEARNING_RATE, ANN_MOMENTUM);
+
+   // Set up continuous trading
+   trade.SetExpertMagicNumber(123456);
+   trade.SetExpertStopLoss(StopLoss);
+   trade.SetExpertTakeProfit(TakeProfit);
+   trade.SetExpertLots(LotSize);
+
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   // Get neural network prediction
+   double prediction = neuralNetwork.Predict(GetMarketData());
+
+   // Check if prediction indicates a buy signal
+   if(prediction > 0)
+   {
+      // Open a buy position
+      trade.Buy();
+   }
+   // Check if prediction indicates a sell signal
+   else if(prediction < 0)
+   {
+      // Open a sell position
+      trade.Sell();
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Get market data                                                  |
+//+------------------------------------------------------------------+
+double[] GetMarketData()
+{
+   // Get current market data
+   double open = iOpen(_Symbol, PERIOD_CURRENT, 0);
+   double high = iHigh(_Symbol, PERIOD_CURRENT, 0);
+   double low = iLow(_Symbol, PERIOD_CURRENT, 0);
+   double close = iClose(_Symbol, PERIOD_CURRENT, 0);
+
+   double[] marketData = {open, high, low, close};
+
+   return marketData;
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   // Clear neural network
+   neuralNetwork.Clear();
+}
